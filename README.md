@@ -253,6 +253,38 @@ await withAnchorBrowser(async (page) => {
 
 ---
 
+## Known Selectors Reference
+
+> These CSS selectors were observed in Canvas LMS web interfaces. Enterprise applications update their UIs — verify against your specific instance and submit PRs when selectors break.
+
+| Element | Selector | Notes |
+|---------|----------|-------|
+| Login: username | `#pseudonym_session_unique_id` | Login form |
+| Login: password | `#pseudonym_session_password` | Login form |
+| Login: submit | `button[type="submit"]` | Login form |
+| Login: mfa code | `#otp_attempt` | Login form |
+| create course: new course btn | `.btn-primary[href*="/courses/new"]` | |
+| create course: course name | `#course_name` | |
+| create course: course code | `#course_course_code` | |
+| create course: term select | `#course_term_id` | |
+| create course: create btn | `button[type="submit"]` | |
+| bulk enroll: enrollment link | `a[href*="/enroll"]` | |
+| bulk enroll: add student btn | `.addStudents` | |
+| bulk enroll: search input | `#user_list` | |
+| bulk enroll: add btn | `button[type="submit"]` | |
+| submit grades: gradebook link | `a[href*="/gradebook"]` | |
+| submit grades: grade input | `.gradebook-cell input` | |
+| submit grades: speed grader link | `a[href*="speed_grader"]` | |
+| submit grades: grade field | `#grading-box-extended` | |
+| submit grades: next submission | `#submission_to_next_student_link` | |
+| export analytics: analytics nav | `a[href*="analytics"]` | |
+| export analytics: date range | `.ic-Input[placeholder*="From"]` | |
+| export analytics: export btn | `button[data-testid="export-csv"]` | |
+
+> ⚠️ Selectors are best-effort. Run `node src/utils.js --verify-selectors` to test against your instance.
+
+---
+
 ## More Browser Automation Projects
 
 This is part of the **[Browser Automation Hub](https://github.com/Browser-Automation-Hub)** — a collection of open-source browser automation scaffolds for systems with poor or no API support:
