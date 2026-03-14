@@ -21,7 +21,7 @@ This system requires **MFA** (Duo / Okta MFA). The OSS version provides TOTP hel
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/canvas-lms-browser-automation.git
+git clone https://github.com/Browser-Automation-Hub/canvas-lms-browser-automation.git
 cd canvas-lms-browser-automation
 npm install
 cp .env.example .env
