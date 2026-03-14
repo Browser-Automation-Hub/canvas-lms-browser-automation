@@ -21,27 +21,35 @@ async function login_canvas(page, opts = {}) {
 
   return retry(async () => {
     await humanDelay(500, 1500);
-
-    // TODO: Replace selectors with actual Canvas LMS selectors
-    // These are placeholder implementations — inspect the actual UI
-    // and update the selectors accordingly.
-
     try {
-      // Example: navigate to the relevant section
-      // await page.goto(`${process.env.CANVAS_URL}/path/to/login-canvas`);
-      // await page.waitForSelector('.main-content, #content, [data-testid="loaded"]', { timeout: 15000 });
-
-      // Extract or interact with data
-      const result = await page.evaluate(() => {
-        // DOM extraction placeholder
-        return { status: 'ok', data: null };
-      });
-
-      log('login_canvas complete', result);
-      return result;
-
+      const BASE_URL = process.env.CANVAS_URL;
+    await page.goto(`${BASE_URL}/login/canvas`, { waitUntil: 'networkidle2' });
+    // If redirected to SSO (Google/Okta/Shibboleth), handle there
+    if (!page.url().includes('/login/canvas')) {
+      await page.waitForSelector('input[type="email"], input[type="text"]', { timeout: 15000 });
+      await page.type('input[type="email"], input[type="text"]', process.env.CANVAS_USERNAME);
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('input[type="password"]', { timeout: 10000 });
+      await page.type('input[type="password"]', process.env.CANVAS_PASSWORD);
+      await page.keyboard.press('Enter');
+    } else {
+      await page.waitForSelector('#pseudonym_session_unique_id', { timeout: 15000 });
+      await page.type('#pseudonym_session_unique_id', process.env.CANVAS_USERNAME);
+      await page.type('#pseudonym_session_password', process.env.CANVAS_PASSWORD);
+      await page.click('button[type="submit"], .ic-Button--login');
+    }
+    // Handle MFA (Duo)
+    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+    const mfaCode = await page.$('#otp_attempt');
+    if (mfaCode) {
+      const code = generateTOTP(process.env.MFA_SECRET);
+      await mfaCode.type(code);
+      await page.click('button[type="submit"]');
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
+    }
+    await page.waitForSelector('#header, #student-view-toggle, .ic-app-header', { timeout: 20000 });
+    return { status: 'logged_in' };
     } catch (err) {
-      // Take screenshot on error for debugging
       await page.screenshot({ path: `error-login_canvas-${Date.now()}.png` }).catch(() => {});
       throw err;
     }
@@ -61,27 +69,16 @@ async function create_course(page, opts = {}) {
 
   return retry(async () => {
     await humanDelay(500, 1500);
-
-    // TODO: Replace selectors with actual Canvas LMS selectors
-    // These are placeholder implementations — inspect the actual UI
-    // and update the selectors accordingly.
-
     try {
-      // Example: navigate to the relevant section
-      // await page.goto(`${process.env.CANVAS_URL}/path/to/create-course`);
-      // await page.waitForSelector('.main-content, #content, [data-testid="loaded"]', { timeout: 15000 });
-
-      // Extract or interact with data
-      const result = await page.evaluate(() => {
-        // DOM extraction placeholder
-        return { status: 'ok', data: null };
-      });
-
-      log('create_course complete', result);
-      return result;
-
+      // TODO: Replace with actual Canvas LMS selectors
+    // await page.goto(`${process.env.CANVAS_URL}/path/to/create-course`);
+    // await page.waitForSelector('.main-content, #content, [data-testid="loaded"]', { timeout: 15000 });
+    const result = await page.evaluate(() => {
+      return { status: 'ok', data: null };
+    });
+    log('create_course complete', result);
+    return result;
     } catch (err) {
-      // Take screenshot on error for debugging
       await page.screenshot({ path: `error-create_course-${Date.now()}.png` }).catch(() => {});
       throw err;
     }
@@ -101,27 +98,18 @@ async function bulk_enroll(page, opts = {}) {
 
   return retry(async () => {
     await humanDelay(500, 1500);
-
-    // TODO: Replace selectors with actual Canvas LMS selectors
-    // These are placeholder implementations — inspect the actual UI
-    // and update the selectors accordingly.
-
     try {
-      // Example: navigate to the relevant section
-      // await page.goto(`${process.env.CANVAS_URL}/path/to/bulk-enroll`);
-      // await page.waitForSelector('.main-content, #content, [data-testid="loaded"]', { timeout: 15000 });
-
-      // Extract or interact with data
-      const result = await page.evaluate(() => {
-        // DOM extraction placeholder
-        return { status: 'ok', data: null };
-      });
-
-      log('bulk_enroll complete', result);
-      return result;
-
+      const BASE_URL = process.env.CANVAS_URL;
+    await page.goto(`${BASE_URL}/courses/${opts.courseId}/users`, { waitUntil: 'networkidle2' });
+    await page.waitForSelector('.btn-primary[href*="enroll"], .ic-Action-header a, button.btn-primary', { timeout: 15000 });
+    await page.click('.btn-primary[href*="enroll"], button[title*="Add People"]');
+    await page.waitForSelector('#user_list, textarea, input[type="text"]', { timeout: 10000 });
+    const userList = opts.emails?.join('\n') || opts.userIds?.join('\n') || '';
+    await page.type('#user_list, textarea', userList);
+    await page.click('button[type="submit"], .ic-Button--primary[type="submit"]');
+    await page.waitForSelector('.ic-flash-success, .success', { timeout: 15000 }).catch(() => {});
+    return { status: 'ok', enrolledCount: opts.emails?.length || opts.userIds?.length };
     } catch (err) {
-      // Take screenshot on error for debugging
       await page.screenshot({ path: `error-bulk_enroll-${Date.now()}.png` }).catch(() => {});
       throw err;
     }
@@ -141,27 +129,36 @@ async function submit_grades(page, opts = {}) {
 
   return retry(async () => {
     await humanDelay(500, 1500);
-
-    // TODO: Replace selectors with actual Canvas LMS selectors
-    // These are placeholder implementations — inspect the actual UI
-    // and update the selectors accordingly.
-
     try {
-      // Example: navigate to the relevant section
-      // await page.goto(`${process.env.CANVAS_URL}/path/to/submit-grades`);
-      // await page.waitForSelector('.main-content, #content, [data-testid="loaded"]', { timeout: 15000 });
-
-      // Extract or interact with data
-      const result = await page.evaluate(() => {
-        // DOM extraction placeholder
-        return { status: 'ok', data: null };
-      });
-
-      log('submit_grades complete', result);
-      return result;
-
+      const BASE_URL = process.env.CANVAS_URL;
+    const { courseId, assignmentId, studentId, grade } = opts;
+    if (assignmentId && studentId) {
+      // SpeedGrader approach (direct grade input)
+      await page.goto(`${BASE_URL}/courses/${courseId}/gradebook/speed_grader?assignment_id=${assignmentId}&student_id=${studentId}`, { waitUntil: 'networkidle2' });
+      await page.waitForSelector('#grading-box-extended, input[name="grade"]', { timeout: 15000 });
+      const gradeInput = await page.$('#grading-box-extended, input[name="grade"]');
+      if (gradeInput) {
+        await gradeInput.click({ clickCount: 3 });
+        await gradeInput.type(String(grade));
+        await page.keyboard.press('Enter');
+        await humanDelay(500, 1000);
+      }
+    } else {
+      // Gradebook bulk entry
+      await page.goto(`${BASE_URL}/courses/${courseId}/gradebook`, { waitUntil: 'networkidle2' });
+      await page.waitForSelector('.gradebook-cell, [data-testid="gradeInput"]', { timeout: 20000 });
+      for (const entry of (opts.grades || [])) {
+        const cell = await page.$(`[data-student="${entry.studentId}"][data-assignment="${entry.assignmentId}"] .grade`);
+        if (cell) {
+          await cell.dblclick();
+          await page.waitForSelector('input.grade, [data-testid="gradeInput"]', { timeout: 3000 });
+          const input = await page.$('input.grade, [data-testid="gradeInput"]');
+          if (input) { await input.click({clickCount:3}); await input.type(String(entry.grade)); await input.press('Tab'); }
+        }
+      }
+    }
+    return { status: 'ok' };
     } catch (err) {
-      // Take screenshot on error for debugging
       await page.screenshot({ path: `error-submit_grades-${Date.now()}.png` }).catch(() => {});
       throw err;
     }
@@ -181,27 +178,16 @@ async function export_analytics(page, opts = {}) {
 
   return retry(async () => {
     await humanDelay(500, 1500);
-
-    // TODO: Replace selectors with actual Canvas LMS selectors
-    // These are placeholder implementations — inspect the actual UI
-    // and update the selectors accordingly.
-
     try {
-      // Example: navigate to the relevant section
-      // await page.goto(`${process.env.CANVAS_URL}/path/to/export-analytics`);
-      // await page.waitForSelector('.main-content, #content, [data-testid="loaded"]', { timeout: 15000 });
-
-      // Extract or interact with data
-      const result = await page.evaluate(() => {
-        // DOM extraction placeholder
-        return { status: 'ok', data: null };
-      });
-
-      log('export_analytics complete', result);
-      return result;
-
+      // TODO: Replace with actual Canvas LMS selectors
+    // await page.goto(`${process.env.CANVAS_URL}/path/to/export-analytics`);
+    // await page.waitForSelector('.main-content, #content, [data-testid="loaded"]', { timeout: 15000 });
+    const result = await page.evaluate(() => {
+      return { status: 'ok', data: null };
+    });
+    log('export_analytics complete', result);
+    return result;
     } catch (err) {
-      // Take screenshot on error for debugging
       await page.screenshot({ path: `error-export_analytics-${Date.now()}.png` }).catch(() => {});
       throw err;
     }
